@@ -49,15 +49,28 @@ export default async function handler(req, res) {
       })
     });
 
+    // Check if response is ok
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Synthesia API Response Error:', response.status, errorText);
+      return res.status(500).json({ error: 'Synthesia API request failed', details: errorText });
+    }
+
     const data = await response.json();
+    console.log('Synthesia API response data:', data);
+    
+    // Return video ID and construct URL
+    const videoId = data.id;
     
     res.status(200).json({ 
-      videoId: data.id,
-      videoUrl: `https://share.synthesia.io/embeds/videos/${data.id}`
+      videoId: videoId,
+      videoUrl: `https://share.synthesia.io/embeds/videos/${videoId}`,
+      status: data.status,
+      fullResponse: data
     });
 
   } catch (error) {
     console.error('Synthesia API Error:', error);
-    res.status(500).json({ error: 'Error creating video with Synthesia' });
+    res.status(500).json({ error: 'Error creating video with Synthesia', details: error.message });
   }
 }
