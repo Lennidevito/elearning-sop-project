@@ -16,61 +16,58 @@ export default async function handler(req, res) {
   const { text } = req.body;
 
   try {
-    const response = await fetch('https://api.synthesia.io/v2/videos', {
+    // Create video with HeyGen API
+    const response = await fetch('https://api.heygen.com/v2/video/generate', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.SYNTHESIA_API_KEY}`,
+        'X-Api-Key': process.env.HEYGEN_API_KEY,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        title: 'SOP Training Feedback',
-        description: 'AI-generated feedback video',
-        visibility: 'private',
-        input: [
+        video_inputs: [
           {
-            avatarSettings: {
-              horizontalAlign: 'center',
-              scale: 1,
-              style: 'rectangular',
-              seamless: false
+            character: {
+              type: 'avatar',
+              avatar_id: 'Tyler-insuit-20220721',
+              avatar_style: 'normal'
             },
-            avatar: 'anna_costume1_cameraA',
-            backgroundSettings: {
-              videoSettings: {
-                shortBackgroundContentMatchMode: 'freeze',
-                longBackgroundContentMatchMode: 'trim'
-              }
-            },
-            background: 'green_screen',
-            scriptText: text,
-            voice: 'en-US-JennyNeural'
+            voice: {
+              type: 'text',
+              input_text: text,
+              voice_id: 'en-US-JennyNeural'
+            }
           }
-        ]
+        ],
+        dimension: {
+          width: 1280,
+          height: 720
+        },
+        aspect_ratio: '16:9'
       })
     });
 
     // Check if response is ok
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Synthesia API Response Error:', response.status, errorText);
-      return res.status(500).json({ error: 'Synthesia API request failed', details: errorText });
+      console.error('HeyGen API Response Error:', response.status, errorText);
+      return res.status(500).json({ error: 'HeyGen API request failed', details: errorText });
     }
 
     const data = await response.json();
-    console.log('Synthesia API response data:', data);
+    console.log('HeyGen API response data:', data);
     
-    // Return video ID and construct URL
-    const videoId = data.id;
+    // HeyGen returns a video_id
+    const videoId = data.data.video_id;
     
     res.status(200).json({ 
       videoId: videoId,
-      videoUrl: `https://share.synthesia.io/embeds/videos/${videoId}`,
-      status: data.status,
-      fullResponse: data
+      videoUrl: `https://app.heygen.com/share/${videoId}`,
+      status: 'processing',
+      message: 'Video is being generated. This may take 1-2 minutes.'
     });
 
   } catch (error) {
-    console.error('Synthesia API Error:', error);
-    res.status(500).json({ error: 'Error creating video with Synthesia', details: error.message });
+    console.error('HeyGen API Error:', error);
+    res.status(500).json({ error: 'Error creating video with HeyGen', details: error.message });
   }
 }
