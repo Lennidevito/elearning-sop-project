@@ -6,17 +6,29 @@ export default async function handler(req, res) {
   const { text } = req.body;
 
   try {
-    const response = await fetch('https://api.perplexity.ai/query', {
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`, // Using secret from environment
+        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ query: text })
+      body: JSON.stringify({
+        model: 'sonar',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful assistant providing feedback on employee SOP responses.'
+          },
+          {
+            role: 'user',
+            content: text
+          }
+        ]
+      })
     });
 
     const data = await response.json();
-    const aiFeedback = data.answer;
+    const aiFeedback = data.choices[0].message.content;
 
     res.status(200).json({ feedback: aiFeedback });
 
