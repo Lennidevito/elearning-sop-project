@@ -15,6 +15,17 @@ export default async function handler(req, res) {
 
   const { text } = req.body;
 
+  // Clean the text for video narration
+  let cleanText = text
+    .replace(/#{1,6}\s/g, '')  // Remove headers
+    .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove bold
+    .replace(/\*(.*?)\*/g, '$1')  // Remove italic
+    .replace(/`(.*?)`/g, '$1')  // Remove code
+    .replace(/[-•·]/g, '')  // Remove bullet points
+    .replace(/\n+/g, ' ')  // Replace line breaks with spaces
+    .replace(/\s+/g, ' ')  // Remove extra spaces
+    .trim();
+
   try {
     // Create video with HeyGen API
     const response = await fetch('https://api.heygen.com/v2/video/generate', {
@@ -28,12 +39,12 @@ export default async function handler(req, res) {
           {
             character: {
               type: 'avatar',
-              avatar_id: 'Tyler-insuit-20220721',
+              avatar_id: 'Annie_public_3_20240108',
               avatar_style: 'normal'
             },
             voice: {
               type: 'text',
-              input_text: text,
+              input_text: cleanText,
               voice_id: '2d5b0e6cf36f460aa7fc47e3eee4ba54'
             }
           }
@@ -57,17 +68,3 @@ export default async function handler(req, res) {
     console.log('HeyGen API response data:', data);
     
     // HeyGen returns a video_id
-    const videoId = data.data.video_id;
-    
-    res.status(200).json({ 
-      videoId: videoId,
-      videoUrl: `https://app.heygen.com/share/${videoId}`,
-      status: 'processing',
-      message: 'Video is being generated. This may take 1-2 minutes.'
-    });
-
-  } catch (error) {
-    console.error('HeyGen API Error:', error);
-    res.status(500).json({ error: 'Error creating video with HeyGen', details: error.message });
-  }
-}
