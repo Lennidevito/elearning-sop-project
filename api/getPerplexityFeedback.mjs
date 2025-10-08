@@ -29,7 +29,7 @@ export default async function handler(req, res) {
           },
           {
             role: 'user',
-            content: `Employee answer to SOP scenario: ${text}`
+            content: `Learner response: ${text}`
           }
         ]
       })
