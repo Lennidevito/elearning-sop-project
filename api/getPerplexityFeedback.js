@@ -27,7 +27,7 @@ export default async function handler(req, res) {
         messages: [
           {
             role: 'system',
-            content: 'You are an SOP training coach. Evaluate the employee response and provide constructive feedback in 2-3 sentences. Be encouraging but point out any missing steps or safety concerns.'
+            content: 'You are an SOP training coach. Evaluate the employee response and provide constructive feedback in 2-3 sentences. Be encouraging but point out any missing steps or safety concerns. Do NOT use markdown formatting, headings, or special characters. Write in plain text only.'
           },
           {
             role: 'user',
@@ -45,7 +45,15 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
-    const aiFeedback = data.choices[0].message.content;
+    let aiFeedback = data.choices[0].message.content;
+    
+    // Strip markdown formatting
+    aiFeedback = aiFeedback
+      .replace(/#{1,6}\s/g, '')  // Remove # headers
+      .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove bold **text**
+      .replace(/\*(.*?)\*/g, '$1')  // Remove italic *text*
+      .replace(/`(.*?)`/g, '$1')  // Remove code `text`
+      .trim();
 
     res.status(200).json({ feedback: aiFeedback });
 
