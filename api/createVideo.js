@@ -34,7 +34,7 @@ export default async function handler(req, res) {
             voice: {
               type: 'text',
               input_text: text,
-              voice_id: 'en-US-JennyNeural'
+              voice_id: '2d5b0e6cf36f460aa7fc47e3eee4ba54'
             }
           }
         ],
