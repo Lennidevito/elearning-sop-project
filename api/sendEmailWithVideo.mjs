@@ -124,21 +124,33 @@ export default async function handler(req, res) {
         to: [{ email: email }],
         subject: 'Your Personalized Learning Summary Video',
         htmlContent: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #333;">Great work on completing your learning session!</h2>
-            <p style="font-size: 16px; line-height: 1.6;">We've created a personalized 5-second video summarizing your key learning point.</p>
-            <p style="font-size: 14px; color: #666;"><strong>Note:</strong> Your video is being generated and will be ready in 1-2 minutes. Click the button below to watch it.</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${videoUrl}" style="display: inline-block; padding: 15px 30px; background: #0066cc; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">Watch Your Learning Summary</a>
-            </div>
-            <p style="color: #666; font-size: 14px;">If the button doesn't work, copy this link: <br><a href="${videoUrl}">${videoUrl}</a></p>
-            <p style="color: #999; font-size: 13px; font-style: italic;">Tip: If the video is still processing when you click, wait a moment and refresh the page.</p>
-            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-            <p style="font-size: 12px; color: #999;">This video was generated based on your learning conversation.</p>
-          </div>
-        `
-      })
-    });
+          htmlContent: `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <h2 style="color: #333;">Great work on completing your learning session!</h2>
+    <p style="font-size: 16px; line-height: 1.6;">We've started generating your personalized 5-second video summary.</p>
+    
+    <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
+      <p style="margin: 0; font-size: 14px; color: #856404;">
+        <strong>⏰ Important:</strong> Your video needs 2-3 minutes to generate. 
+        Please wait a few minutes after receiving this email before clicking the button below.
+      </p>
+    </div>
+    
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${videoUrl}" style="display: inline-block; padding: 15px 30px; background: #0066cc; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">Watch Your Learning Summary</a>
+    </div>
+    
+    <p style="color: #666; font-size: 14px;">If the button doesn't work, copy this link: <br><a href="${videoUrl}">${videoUrl}</a></p>
+    
+    <p style="color: #999; font-size: 13px; font-style: italic;">
+      💡 Tip: If the video shows "processing" when you click the link, simply refresh the page after a minute.
+    </p>
+    
+    <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+    <p style="font-size: 12px; color: #999;">This video was generated based on your learning conversation.</p>
+  </div>
+`
+
 
     if (!emailResponse.ok) {
       const errorText = await emailResponse.text();
