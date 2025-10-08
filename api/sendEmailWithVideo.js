@@ -26,11 +26,11 @@ export default async function handler(req, res) {
         messages: [
           {
             role: 'system',
-            content: 'You are a learning coach. Create a VERY short 5-second video script (maximum 15 words) with one key learning takeaway. Be concise and encouraging.'
+            content: 'You are a learning coach. Create a VERY short 5-second video script (maximum 15 words) with one key learning takeaway. Be concise and encouraging. Write ONLY in plain conversational English suitable for text-to-speech. Do NOT include: markdown, citations, numbers in brackets, bullet points, numbered lists, headers, special characters, or formatting. Only write natural sentences that can be spoken aloud.'
           },
           {
             role: 'user',
-            content: `Summarize the most important learning point from this conversation in maximum 15 words: ${chatHistory}`
+            content: `Summarize the most important learning point from this conversation in maximum 15 words as natural speech: ${chatHistory}`
           }
         ]
       })
@@ -43,7 +43,35 @@ export default async function handler(req, res) {
     }
 
     const summaryData = await summaryResponse.json();
-    const videoScript = summaryData.choices[0].message.content;
+    let videoScript = summaryData.choices[0].message.content;
+    
+    // Comprehensive cleaning for TTS - remove EVERYTHING that shouldn't be spoken
+    videoScript = videoScript
+      // Remove citations [1], [2], etc.
+      .replace(/\[\d+\]/g, '')
+      // Remove numbered lists like "1.", "2.", etc.
+      .replace(/^\d+\.\s/gm, '')
+      .replace(/\n\d+\.\s/g, ' ')
+      // Remove markdown headers
+      .replace(/#{1,6}\s/g, '')
+      // Remove bold/italic
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      // Remove code formatting
+      .replace(/`(.*?)`/g, '$1')
+      // Remove bullet points
+      .replace(/^[-•·]\s/gm, '')
+      .replace(/\n[-•·]\s/g, ' ')
+      // Remove parentheses and brackets
+      .replace(/[(){}\[\]]/g, '')
+      // Remove line breaks
+      .replace(/\n+/g, ' ')
+      // Remove multiple spaces
+      .replace(/\s+/g, ' ')
+      // Remove any remaining special characters except basic punctuation
+      .replace(/[^a-zA-Z0-9\s.,!?'-]/g, '')
+      .trim();
+    
     console.log('Video script created:', videoScript);
 
     // Step 2: Create HeyGen video
@@ -56,12 +84,11 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         video_inputs: [
           {
-character: {
-  type: 'avatar',
-  avatar_id: 'Annie_Business_Casual_Standing_Front_public',
-  avatar_style: 'normal'
-},
-
+            character: {
+              type: 'avatar',
+              avatar_id: 'Annie_Business_Casual_Standing_Front_public',
+              avatar_style: 'normal'
+            },
             voice: {
               type: 'text',
               input_text: videoScript,
@@ -85,10 +112,46 @@ character: {
 
     const videoData = await videoResponse.json();
     const videoId = videoData.data.video_id;
-    const videoUrl = `https://app.heygen.com/share/${videoId}`;
-    console.log('Video created:', videoId);
+    console.log('Video generation started:', videoId);
 
-    // Step 3: Send email using Brevo with Reply-To
+    // Step 3: Wait for video to be ready (poll status)
+    let videoReady = false;
+    let videoUrl = null;
+    let attempts = 0;
+    const maxAttempts = 24; // 2 minutes max (24 * 5 seconds)
+
+    while (!videoReady && attempts < maxAttempts) {
+      // Wait 5 seconds before checking
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      
+      const statusResponse = await fetch(`https://api.heygen.com/v1/video_status.get?video_id=${videoId}`, {
+        method: 'GET',
+        headers: {
+          'X-Api-Key': process.env.HEYGEN_API_KEY
+        }
+      });
+
+      if (statusResponse.ok) {
+        const statusData = await statusResponse.json();
+        console.log(`Video status check ${attempts + 1}:`, statusData.data.status);
+        
+        if (statusData.data.status === 'completed') {
+          videoReady = true;
+          videoUrl = statusData.data.video_url;
+          console.log('Video is ready!', videoUrl);
+        } else if (statusData.data.status === 'failed') {
+          console.error('Video generation failed');
+          break;
+        }
+      }
+      
+      attempts++;
+    }
+
+    // Use either the completed video URL or the share URL as fallback
+    const finalVideoUrl = videoUrl || `https://app.heygen.com/share/${videoId}`;
+
+    // Step 4: Send email using Brevo with Reply-To
     const emailResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
@@ -110,11 +173,14 @@ character: {
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #333;">Great work on completing your learning session!</h2>
             <p style="font-size: 16px; line-height: 1.6;">We've created a personalized 5-second video summarizing your key learning point.</p>
-            <p style="font-size: 14px; color: #666;"><strong>Note:</strong> Your video is being generated and will be ready in 1-2 minutes.</p>
+            ${videoReady ? 
+              '<p style="font-size: 14px; color: #28a745; font-weight: bold;">✅ Your video is ready to watch!</p>' :
+              '<p style="font-size: 14px; color: #666;"><strong>Note:</strong> Your video may still be processing. It will be ready in just a moment.</p>'
+            }
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${videoUrl}" style="display: inline-block; padding: 15px 30px; background: #0066cc; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">Watch Your Learning Summary</a>
+              <a href="${finalVideoUrl}" style="display: inline-block; padding: 15px 30px; background: #0066cc; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">Watch Your Learning Summary</a>
             </div>
-            <p style="color: #666; font-size: 14px;">If the button doesn't work, copy this link: <br><a href="${videoUrl}">${videoUrl}</a></p>
+            <p style="color: #666; font-size: 14px;">If the button doesn't work, copy this link: <br><a href="${finalVideoUrl}">${finalVideoUrl}</a></p>
             <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
             <p style="font-size: 12px; color: #999;">This video was generated based on your learning conversation.</p>
           </div>
@@ -133,8 +199,11 @@ character: {
 
     res.status(200).json({ 
       success: true,
-      message: 'Email sent successfully! Check your inbox in 1-2 minutes for your 5-second video.',
-      videoId: videoId
+      message: videoReady ? 
+        'Email sent! Your video is ready to watch now.' : 
+        'Email sent! Your video will be ready shortly.',
+      videoId: videoId,
+      videoReady: videoReady
     });
 
   } catch (error) {
