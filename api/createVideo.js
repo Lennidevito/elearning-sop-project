@@ -38,10 +38,11 @@ export default async function handler(req, res) {
         video_inputs: [
           {
             character: {
-              type: 'avatar',
-              avatar_id: 'Annie_public_3_20240108',
-              avatar_style: 'normal'
-            },
+  type: 'avatar',
+  avatar_id: 'Annie_Business_Casual_Standing_Front_public',
+  avatar_style: 'normal'
+},
+
             voice: {
               type: 'text',
               input_text: cleanText,
