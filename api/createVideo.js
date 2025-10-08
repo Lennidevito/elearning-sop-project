@@ -37,11 +37,12 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         video_inputs: [
           {
-            character: {
+character: {
   type: 'avatar',
   avatar_id: 'Annie_Business_Casual_Standing_Front_public',
   avatar_style: 'normal'
 },
+
 
             voice: {
               type: 'text',
