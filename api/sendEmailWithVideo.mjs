@@ -131,8 +131,8 @@ export default async function handler(req, res) {
             
             <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
               <p style="margin: 0; font-size: 14px; color: #856404;">
-                <strong>⏰ Important:</strong> Your video needs 2-3 minutes to generate. 
-                Please wait a few minutes after receiving this email before clicking the button below.
+                <strong>⏰ Important:</strong> Your video needs at least 10 minutes to generate. 
+                Please wait at least 10 minutes after receiving this email before clicking the button below.
               </p>
             </div>
             
