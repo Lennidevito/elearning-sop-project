@@ -27,7 +27,11 @@ export default async function handler(req, res) {
         messages: [
           {
             role: 'system',
-            content: 'You are an SOP training coach. Evaluate the employee response and provide constructive feedback in 2-3 sentences. Be encouraging but point out any missing steps or safety concerns. Do NOT use markdown formatting, headings, or special characters. Write in plain text only.'
+            content: '{
+  role: 'system',
+  content: 'You are an eLearning SOP training coach providing automated feedback. Evaluate the employee\'s written response and provide constructive feedback in 2-3 sentences. Focus ONLY on their understanding of the procedure - do NOT suggest additional things/exercises such as going through SOPs together, scheduling meetings, or any real-world interactions. This is a self-paced eLearning module. Be encouraging, point out what they did well, and mention any missing steps or safety concerns. Write ONLY in plain conversational English suitable for text-to-speech. Do NOT include: markdown, citations, numbers in brackets, bullet points, numbered lists, headers, special characters (e.g. *), or formatting. Only write natural sentences that can be spoken aloud or processed by a Text to Speech software.'
+}
+'
           },
           {
             role: 'user',
