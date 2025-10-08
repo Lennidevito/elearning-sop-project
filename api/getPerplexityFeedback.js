@@ -23,11 +23,11 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'sonar',
+        model: 'llama-3.1-sonar-small-128k-online',
         messages: [
           {
             role: 'system',
-            content: 'You are an SOP training coach. Evaluate the employee\'s response and provide constructive feedback in 2-3 sentences. Be encouraging but point out any missing steps or safety concerns.'
+            content: 'You are an SOP training coach. Evaluate the employee response and provide constructive feedback in 2-3 sentences. Be encouraging but point out any missing steps or safety concerns.'
           },
           {
             role: 'user',
@@ -37,6 +37,13 @@ export default async function handler(req, res) {
       })
     });
 
+    // Check if response is ok
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Perplexity API Response Error:', response.status, errorText);
+      return res.status(500).json({ error: 'Perplexity API request failed' });
+    }
+
     const data = await response.json();
     const aiFeedback = data.choices[0].message.content;
 
@@ -44,6 +51,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Perplexity API Error:', error);
-    res.status(500).json({ error: 'Error connecting to Perplexity API' });
+    res.status(500).json({ error: 'Error connecting to Perplexity API', details: error.message });
   }
 }
