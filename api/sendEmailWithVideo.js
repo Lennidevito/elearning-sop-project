@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   const { email, chatHistory } = req.body;
 
   try {
-    // Step 1: Create summary with Perplexity
+    // Step 1: Create summary with Perplexity (5-second video = ~15 words)
     const summaryResponse = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
@@ -26,11 +26,11 @@ export default async function handler(req, res) {
         messages: [
           {
             role: 'system',
-            content: 'You are a learning coach. Create a concise 30-second video script (about 75 words) summarizing key learning points from this conversation. Be encouraging and highlight the most important takeaways.'
+            content: 'You are a learning coach. Create a VERY short 5-second video script (maximum 15 words) with one key learning takeaway. Be concise and encouraging.'
           },
           {
             role: 'user',
-            content: `Summarize this learning conversation: ${chatHistory}`
+            content: `Summarize the most important learning point from this conversation in maximum 15 words: ${chatHistory}`
           }
         ]
       })
@@ -87,7 +87,7 @@ export default async function handler(req, res) {
     const videoUrl = `https://app.heygen.com/share/${videoId}`;
     console.log('Video created:', videoId);
 
-    // Step 3: Send email using Brevo
+    // Step 3: Send email using Brevo with Reply-To
     const emailResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
@@ -99,12 +99,16 @@ export default async function handler(req, res) {
           name: 'Lennart eLearning',
           email: 'lennart.elearning@gmail.com'
         },
+        replyTo: {
+          email: 'lennart.elearning@gmail.com',
+          name: 'Lennart'
+        },
         to: [{ email: email }],
         subject: 'Your Personalized Learning Summary Video',
         htmlContent: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #333;">Great work on completing your learning session!</h2>
-            <p style="font-size: 16px; line-height: 1.6;">We've created a personalized 30-second video summarizing what you learned today.</p>
+            <p style="font-size: 16px; line-height: 1.6;">We've created a personalized 5-second video summarizing your key learning point.</p>
             <p style="font-size: 14px; color: #666;"><strong>Note:</strong> Your video is being generated and will be ready in 1-2 minutes.</p>
             <div style="text-align: center; margin: 30px 0;">
               <a href="${videoUrl}" style="display: inline-block; padding: 15px 30px; background: #0066cc; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">Watch Your Learning Summary</a>
@@ -128,7 +132,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ 
       success: true,
-      message: 'Email sent successfully! Check your inbox in 1-2 minutes for your video.',
+      message: 'Email sent successfully! Check your inbox in 1-2 minutes for your 5-second video.',
       videoId: videoId
     });
 
