@@ -17,11 +17,11 @@ export default async function handler(req, res) {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant providing feedback on employee SOP responses.'
+            content: 'You are an SOP training coach. Evaluate the employee\'s response and provide constructive feedback in 2-3 sentences. Be encouraging but point out any missing steps or safety concerns.'
           },
           {
             role: 'user',
-            content: text
+            content: `Employee's answer to SOP scenario: ${text}`
           }
         ]
       })
@@ -33,6 +33,7 @@ export default async function handler(req, res) {
     res.status(200).json({ feedback: aiFeedback });
 
   } catch (error) {
+    console.error('Perplexity API Error:', error);
     res.status(500).json({ error: 'Error connecting to Perplexity API' });
   }
 }
